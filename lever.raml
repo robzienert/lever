@@ -1,0 +1,208 @@
+#%RAML 1.0
+title: Lever API
+version: v1
+baseUri: http://localhost:8500
+types:
+  HealthStatus:
+    type: object
+    properties:
+      status:
+        type: object
+        properties:
+          []:
+            type: string
+    example: |
+      {
+        "status": {
+          "cassandra": "could not connect to seed 10.10.10.10",
+          "statsd": "OK"
+        }
+      }
+  Breadcrumb:
+    type: object
+    properties:
+      action: string
+      actor: string
+      dateCreated: date
+      fields:
+        type: object
+        properties:
+          []:
+            type: string
+    example: |
+      {
+        "action": "upsert feature",
+        "actor": "robzienert",
+        "dateCreated": "2016-01-01T00:00:00Z",
+        "fields": {
+          "namespace": "mobile.ios",
+          "key": "fooFeature",
+          "gate_value": "false -> true"
+        }
+      }
+  AuditResponse:
+    type: object
+    properties:
+      breadcrumbs: Breadcrumb[]
+  Feature:
+    type: object
+    properties:
+      namespace?: string
+      key: string
+      type: string
+      value: string
+      gate:
+        type: object
+        properties:
+          value?: string
+          groups?: string[]
+          actors?: string[]
+          actorPercent?: integer
+          percentOfTime?: integer
+      dateCreated: date
+      lastUpdated: date
+    example: |
+      {
+        "key": "someDisabledFeature",
+        "namespace": "bar",
+        "type": "java.lang.Boolean",
+        "value": "true",
+        "gate": {
+          "value":"false"
+        },
+        "dateCreated": "2016-01-01T00:00:00Z",
+        "lastUpdated": "2016-01-01T00:00:00Z"
+      }
+  FeatureResponse:
+    type: object
+    properties:
+      feature: Feature
+  ListFeaturesResponse:
+    type: object
+    properties:
+      features: Feature[]
+  FeatureStateResponse:
+    type: object
+    properties:
+      namespace?: string
+      key: string
+      enabled: boolean
+  BatchFeatureStateResponse:
+    type: object
+    properties:
+      states: FeatureStateResponse[]
+  BatchFeatureStateRequest:
+    type: object
+    properties:
+      namespacedFeatures?:
+        type: object
+        properties:
+          []:
+            type: string[]
+      features?: string[]
+    example: |
+      {
+        "namespacedFeatures": {
+          "mobile.ios": [
+            "fooFeature",
+            "barFeature"
+          ]
+        },
+        "features": [
+          "bazFeature"
+        ]
+      }
+
+/api:
+  /audit:
+    get:
+      description: Returns a date-sorted (most recent first) record of all destructive actions made into the service.
+      responses:
+        200:
+          body:
+            application/json:
+              type: AuditResponse
+  /features:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: ListFeaturesResponse
+      queryParameters:
+        ns:
+          type: string
+    post:
+      body:
+        application/json:
+          type: BatchFeatureStateRequest
+      queryParameters:
+        actors:
+          type: string
+        groups:
+          type: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: BatchFeatureStateResponse
+  /features/{key}:
+    get:
+      queryParameters:
+        ns:
+          type: string
+      responses:
+        200:
+          body:
+            application/json:
+              type: FeatureResponse
+        404:
+    delete:
+      queryParameters:
+        ns:
+          type: string
+      responses:
+        404:
+        204:
+    put:
+      body:
+        application/json:
+          type: Feature
+      responses:
+        200:
+          body:
+            application/json:
+              type: FeatureResponse
+    uriParameters:
+      key:
+        type: string
+  /features/{key}/state:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: FeatureStateResponse
+        404:
+      queryParameters:
+        ns:
+          type: string
+        actors:
+          type: string
+        groups:
+          type: string
+    uriParameters:
+      key:
+        type: string
+/status:
+  description: Returns the service health status.
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: HealthStatus
+      500:
+        body:
+          application/json:
+            type: HealthStatus

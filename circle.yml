@@ -1,0 +1,27 @@
+---
+machine:
+  environment:
+    GO15VENDOREXPERIMENT: 1
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/lever"
+    GOSRC_PATH: /home/ubuntu/.go_workspace/src
+
+dependencies:
+  override:
+  - go get github.com/mitchellh/gox
+  - go get github.com/Masterminds/glide
+
+  post:
+  - glide i
+  - mkdir -p "$GOSRC_PATH/$IMPORT_PATH"
+  - rsync -az --include ".git*" --delete ./ "$GOSRC_PATH/$IMPORT_PATH/"
+
+test:
+  override:
+  - cd "$GOSRC_PATH/$IMPORT_PATH/" && go vet $(glide nv)
+  - cd "$GOSRC_PATH/$IMPORT_PATH/" && go test -v -race $(glide nv)
+
+deployment:
+  master:
+    branch: master
+    commands:
+    - cd "$GOSRC_PATH/$IMPORT_PATH/" && gox -osarch="linux/amd64 darwin/amd64" -ldflags="-X main.version=${VERSION}" -output="build/{{.Dir}}_${VERSION}_{{.OS}}_{{.Arch}}"

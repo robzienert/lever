@@ -1,0 +1,26 @@
+package: github.com/robzienert/lever
+import:
+- package: github.com/DataDog/datadog-go
+  subpackages:
+  - statsd
+- package: github.com/Sirupsen/logrus
+- package: github.com/asaskevich/govalidator
+- package: github.com/gin-gonic/contrib
+  subpackages:
+  - ginrus
+- package: github.com/gin-gonic/gin
+- package: github.com/gocql/gocql
+- package: github.com/spf13/viper
+- package: gopkg.in/alecthomas/kingpin.v2
+- package: github.com/rakyll/gom
+  subpackages:
+  - http
+- package: github.com/spaolacci/murmur3
+- package: github.com/stretchr/testify
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  subpackages:
+  - assert
+  - suite
+- package: github.com/satori/go.uuid
+- package: github.com/karlseguin/ccache
+- package: github.com/robzienert/gin-middleware
